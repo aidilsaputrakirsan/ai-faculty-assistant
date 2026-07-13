@@ -1,0 +1,4 @@
+project_id = "ai-faculty-assistant"
+
+[functions.chat]
+verify_jwt = false
