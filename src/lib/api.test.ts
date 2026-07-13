@@ -25,13 +25,19 @@ describe('sendChat', () => {
   it('surfaces the function error message on failure', async () => {
     invoke.mockResolvedValue({
       data: null,
-      error: { message: 'boom', context: { json: async () => ({ error: 'Terlalu banyak permintaan.' }) } },
+      error: {
+        message: 'boom',
+        context: {
+          status: 429,
+          clone: () => ({ json: async () => ({ error: 'Terlalu banyak permintaan.' }) }),
+        },
+      },
     });
     await expect(sendChat('halo')).rejects.toThrow('Terlalu banyak permintaan.');
   });
 
-  it('falls back to a generic message when no detail is available', async () => {
+  it('falls back to a message when no response context is available', async () => {
     invoke.mockResolvedValue({ data: null, error: { message: 'network' } });
-    await expect(sendChat('halo')).rejects.toThrow(/kesalahan/i);
+    await expect(sendChat('halo')).rejects.toThrow(/tidak dapat dihubungi/i);
   });
 });
