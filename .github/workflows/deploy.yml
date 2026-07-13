@@ -37,8 +37,8 @@ jobs:
           # Configure these as repository secrets/variables.
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
-          # For a project page the base path must be "/<repo>/".
-          VITE_BASE_PATH: ${{ vars.VITE_BASE_PATH || '/' }}
+          # Served at myst-tech.com/ai-faculty-assistant/ -> base is fixed.
+          VITE_BASE_PATH: /ai-faculty-assistant/
         run: npm run build
 
       # Assemble the published site. When VITE_BASE_PATH is a subpath
@@ -47,23 +47,15 @@ jobs:
       # A root redirect + SPA 404 fallback are added too.
       - name: Assemble site (subpath + SPA fallback)
         env:
-          BASE: ${{ vars.VITE_BASE_PATH || '/' }}
-          CNAME: ${{ vars.PAGES_CNAME }}
+          BASE: /ai-faculty-assistant/
         run: |
           set -e
-          SUB="${BASE#/}"; SUB="${SUB%/}"
-          mkdir -p site
-          if [ -n "$SUB" ]; then
-            mkdir -p "site/$SUB"
-            cp -r dist/. "site/$SUB/"
-            cp "site/$SUB/index.html" "site/$SUB/404.html"
-            cp "site/$SUB/index.html" site/404.html
-            printf '<!doctype html><meta http-equiv="refresh" content="0; url=%s">' "$BASE" > site/index.html
-          else
-            cp -r dist/. site/
-            cp site/index.html site/404.html
-          fi
-          if [ -n "$CNAME" ]; then echo "$CNAME" > site/CNAME; fi
+          SUB="ai-faculty-assistant"
+          mkdir -p "site/$SUB"
+          cp -r dist/. "site/$SUB/"
+          cp "site/$SUB/index.html" "site/$SUB/404.html"
+          cp "site/$SUB/index.html" site/404.html
+          printf '<!doctype html><meta http-equiv="refresh" content="0; url=%s">' "$BASE" > site/index.html
           echo "Published structure:" && ls -R site | head -50
 
       - uses: actions/upload-pages-artifact@v3
