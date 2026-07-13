@@ -25,7 +25,9 @@ jobs:
           node-version: 22
           cache: npm
 
-      - run: npm ci
+      # Use `npm install` (not `npm ci`) so a lockfile produced by a newer
+      # local npm doesn't break the CI runner's npm strict sync check.
+      - run: npm install --no-audit --no-fund
 
       - run: npm run test
 
