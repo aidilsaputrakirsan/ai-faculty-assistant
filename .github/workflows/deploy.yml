@@ -41,12 +41,34 @@ jobs:
           VITE_BASE_PATH: ${{ vars.VITE_BASE_PATH || '/' }}
         run: npm run build
 
-      - name: Add SPA fallback (404.html)
-        run: cp dist/index.html dist/404.html || true
+      # Assemble the published site. When VITE_BASE_PATH is a subpath
+      # (e.g. /ai-faculty-assistant/) the built files are nested under that
+      # folder so a custom-domain apex site can serve the app at the subpath.
+      # A root redirect + SPA 404 fallback are added too.
+      - name: Assemble site (subpath + SPA fallback)
+        env:
+          BASE: ${{ vars.VITE_BASE_PATH || '/' }}
+          CNAME: ${{ vars.PAGES_CNAME }}
+        run: |
+          set -e
+          SUB="${BASE#/}"; SUB="${SUB%/}"
+          mkdir -p site
+          if [ -n "$SUB" ]; then
+            mkdir -p "site/$SUB"
+            cp -r dist/. "site/$SUB/"
+            cp "site/$SUB/index.html" "site/$SUB/404.html"
+            cp "site/$SUB/index.html" site/404.html
+            printf '<!doctype html><meta http-equiv="refresh" content="0; url=%s">' "$BASE" > site/index.html
+          else
+            cp -r dist/. site/
+            cp site/index.html site/404.html
+          fi
+          if [ -n "$CNAME" ]; then echo "$CNAME" > site/CNAME; fi
+          echo "Published structure:" && ls -R site | head -50
 
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: dist
+          path: site
 
   deploy:
     needs: build
